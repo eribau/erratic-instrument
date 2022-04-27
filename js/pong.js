@@ -39,7 +39,9 @@ class Game {
       this.backgroundColor = '#2c3e50';
 
       this.player = new Actor(18, 70, 150, (this.canvas.height / 2) - 35, 0, DIRECTION.IDLE, 10);
-      this.ball = new Actor(18, 18, this.canvas.width - 150, (this.canvas.height / 2) - 9, DIRECTION.IDLE, DIRECTION.IDLE, BALL_SPEED)
+      this.ball = new Actor(18, 18, this.canvas.width - 150, (this.canvas.height / 2) - 9, DIRECTION.IDLE, DIRECTION.IDLE, BALL_SPEED);
+
+      webAudioXML.setVariable("ballX", this.ball.x);
 
       this.running = false;
       this.newRound = true;
@@ -119,12 +121,13 @@ class Game {
       if(this.ball.moveX === DIRECTION.LEFT) this.ball.x -= this.ball.speed;
       else if(this.ball.moveX === DIRECTION.RIGHT) this.ball.x += this.ball.speed;
 
+      webAudioXML.setVariable("ballX", this.ball.x);
+
       // Handle player-ball collision
       if(this.ball.x - this.ball.width <= this.player.x && this.ball.x >= this.player.x - this.player.width) {
          if(this.ball.y <= this.player.y + this.player.height && this.ball.y + this.ball.height >= this.player.y) {
             this.ball.x = this.player.x + this.ball.width;
             this.ball.moveX = DIRECTION.RIGHT;
-            console.log("ball-player collision");
          }
       }      
    }
@@ -141,7 +144,6 @@ class Game {
          if(this.running === false) {
             this.running = true;
             window.requestAnimationFrame(this.loop);
-            console.log("Key pressed")
          }
 
          if(e.key === 'ArrowUp' || e.key === 'w') {
