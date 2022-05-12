@@ -8,6 +8,8 @@ const DIRECTION = {
 
 const BALL_SPEED = 4;
 
+const testEvent = new CustomEvent('trigger', {bubbles: false, cancelable: true, detail: [144, 60, 127]});
+
 class Actor {
    constructor(
       width,
@@ -16,7 +18,8 @@ class Actor {
       y,
       moveX,
       moveY,
-      speed
+      speed,
+      initialSpeed
    ) {
       this.width = width;
       this.height = height;
@@ -33,20 +36,24 @@ class Game {
       this.canvas = document.querySelector('canvas');
       this.context = this.canvas.getContext('2d');
 
-      this.canvas.width = 800;
+      this.canvas.width = 600;
       this.canvas.height = 600;
 
       this.backgroundColor = '#2c3e50';
 
-      this.player = new Actor(18, 70, 150, (this.canvas.height / 2) - 35, 0, DIRECTION.IDLE, 10);
-      this.ball = new Actor(18, 18, this.canvas.width - 150, (this.canvas.height / 2) - 9, DIRECTION.IDLE, DIRECTION.IDLE, BALL_SPEED);
+      this.player = new Actor(30, 30, (this.canvas.width / 2), (this.canvas.height) - 30, 0, DIRECTION.IDLE, 0);
 
-      webAudioXML.setVariable("ballX", this.ball.x);
+      webAudioXML.setVariable("x", this.player.x);
+      webAudioXML.setVariable("y", this.player.y);
+
+      this.acceleration = 2;
+      this.deceleration = 0.97;
+      this.epsilon = 0.3;
 
       this.running = false;
-      this.newRound = true;
+      this.inputEnabled = true;
       this.timer = 0;
-      this.round = 1;
+      this.slowDown = false;
       
       this.draw();
       this.listen();
@@ -72,64 +79,49 @@ class Game {
          this.player.height
       )
 
-      // Draw the ball
-      this.context.fillRect(
-         this.ball.x,
-         this.ball.y,
-         this.ball.width,
-         this.ball.height
-      )
-
-      // Draw the current round
-      this.context.font = '40px Raleway';
-      this.context.textAlign = 'center';
-
-      this.context.fillText(
-         'Round ' + this.round,
-         this.canvas.width / 2,
-         100
-      );
    }
 
    update() {
-      // Check if the ball collides with bounding box
-      if(this.ball.x <= 0) this.resetTurn(); 
-      if(this.ball.x >= this.canvas.width - this.ball.width) this.ball.moveX = DIRECTION.LEFT;
-      if(this.ball.y <= 0) this.ball.moveY = DIRECTION.DOWN;
-      if(this.ball.y >= this.canvas.height - this.ball.height) this.ball.moveY = DIRECTION.UP; 
+      if(this.slowDown) {
+         if(this.player.speed > this.epsilon) {
+            this.player.speed *= this.deceleration;
+         } else {
+            this.slowDown = false;
+            this.player.moveY = DIRECTION.IDLE;
+            this.player.moveX = DIRECTION.IDLE;
+         }
+      } 
 
       // Move player
       if(this.player.moveY === DIRECTION.UP) this.player.y -= this.player.speed;
       if(this.player.moveY === DIRECTION.DOWN) this.player.y += this.player.speed;
-
-      // Serve ball
-      if(this.turnDelayIsOver() && this.newRound) {
-         this.ball.moveX = DIRECTION.LEFT;
-         this.ball.moveY = [DIRECTION.UP, DIRECTION.DOWN][Math.round(Math.random())];
-         this.ball.y = this.canvas.height / 2; // Math.floor(Math.random() * this.canvas.height - 200) + 200;
-
-         this.newRound = false;
-      }
+      if(this.player.moveX === DIRECTION.LEFT) this.player.x -= this.player.speed;
+      if(this.player.moveX === DIRECTION.RIGHT) this.player.x += this.player.speed; 
 
       // Check if player collides with bounding box
-      if(this.player.y <= 0) this.player.y = 0;
-      if(this.player.y >= (this.canvas.height - this.player.height)) this.player.y = (this.canvas.height - this.player.height);
+      if(this.player.y <= 0) {
+         this.player.y = 0;
+         this.player.moveY = DIRECTION.DOWN;
+         this.debounce();
+      }
+      if(this.player.y >= (this.canvas.height - this.player.height)) {
+         this.player.y = (this.canvas.height - this.player.height);
+         this.player.moveY = DIRECTION.UP;
+         this.debounce();
+      }
+      if(this.player.x <= 0) {
+         this.player.x = 0;
+         this.player.moveX = DIRECTION.RIGHT;
+         this.debounce();
+      }
+      if(this.player.x >= (this.canvas.width - this.player.width)) {
+         this.player.x = (this.canvas.width - this.player.width);
+         this.player.moveX = DIRECTION.LEFT;
+         this.debounce();
+      } 
 
-      // Move ball
-      if(this.ball.moveY === DIRECTION.UP) this.ball.y -= this.ball.speed / 1.5;
-      else if(this.ball.moveY === DIRECTION.DOWN) this.ball.y += this.ball.speed / 1.5;
-      if(this.ball.moveX === DIRECTION.LEFT) this.ball.x -= this.ball.speed;
-      else if(this.ball.moveX === DIRECTION.RIGHT) this.ball.x += this.ball.speed;
-
-      webAudioXML.setVariable("ballX", this.ball.x);
-
-      // Handle player-ball collision
-      if(this.ball.x - this.ball.width <= this.player.x && this.ball.x >= this.player.x - this.player.width) {
-         if(this.ball.y <= this.player.y + this.player.height && this.ball.y + this.ball.height >= this.player.y) {
-            this.ball.x = this.player.x + this.ball.width;
-            this.ball.moveX = DIRECTION.RIGHT;
-         }
-      }      
+      webAudioXML.setVariable("x", this.player.x);
+      webAudioXML.setVariable("y", this.player.y);
    }
 
    loop() {
@@ -145,32 +137,37 @@ class Game {
             this.running = true;
             window.requestAnimationFrame(this.loop);
          }
-
-         if(e.key === 'ArrowUp' || e.key === 'w') {
-            this.player.moveY = DIRECTION.UP;
+         
+         this.slowDown = false;
+         if(this.player.speed < 10) {
+            this.player.speed += this.acceleration;
          }
-         if(e.key === 'ArrowDown' || e.key === 's') {
-            this.player.moveY = DIRECTION.DOWN;
+
+         if(this.inputEnabled) {
+            if(e.key === 'ArrowUp' || e.key === 'w') {
+               this.player.moveY = DIRECTION.UP;
+            }
+            if(e.key === 'ArrowDown' || e.key === 's') {
+               this.player.moveY = DIRECTION.DOWN;
+            }
+            if(e.key === 'ArrowLeft' || e.key === 'a') {
+               this.player.moveX = DIRECTION.LEFT;
+            }
+            if(e.key === 'ArrowRight' || e.key === 'd') {
+               this.player.moveX = DIRECTION.RIGHT;
+            }
          }
       });
 
       document.addEventListener('keyup', (e) => {
-         this.player.moveY = DIRECTION.IDLE;
+         this.slowDown = true;
       });
    }
 
-   resetTurn() {
-      // Reset ball
-      this.ball = new Actor(18, 18, this.canvas.width - 150, (this.canvas.height / 2) - 9, DIRECTION.IDLE, DIRECTION.IDLE, BALL_SPEED)
-      this.timer = new Date().getTime();
-      this.newRound = true;
-
-      // Increment round number
-      this.round++;
-   }
-
-   turnDelayIsOver() {
-      return ((new Date()).getTime() - this.timer >= 1000);
+   debounce() {
+      this.inputEnabled = false;
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => {this.inputEnabled = true;}, 200);
    }
 }
 

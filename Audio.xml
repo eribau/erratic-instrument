@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Audio version="1.0" timeUnit="ms" gain="-10dB" interactionArea="#touchArea">
 
-	<var name="pitch" value="$ballX" mapin="0,600" mapout="20,2000"></var>
+	<var name="cutoff" value="$y" mapin="0,600" mapout="15,3000"></var>
+	<var name="pitch" value="$x" mapin="0,600" mapout="60,72" steps="0 2 4 5 7 9 11 12" convert="440 * Math.pow(2, (x - 69) / 12)"></var>
 
-	<Chain>
+		<Chain>
+			<!-- <OscillatorNode type="sawtooth" frequency="$pitch" steps="0 2 4 5 7 9 11 12"></OscillatorNode> -->
+			
+			<OscillatorNode type="sawtooth">
+				<frequency follow="pitch"></frequency>
+			</OscillatorNode>
+	
+			<BiquadFilterNode type="lowpass" frequency="$cutoff"></BiquadFilterNode>
+	
+			<GainNode gain="10" >
+			</GainNode>
+	
+		</Chain>
 
-		<OscillatorNode type="sawtooth">
-			<frequency follow="relX" map="0,100,20,2000"></frequency>
-		</OscillatorNode>
-
-		<BiquadFilterNode type="lowpass" frequency="$pitch"></BiquadFilterNode>
-
-		<GainNode gain="$pointerdown"></GainNode>
-
-	</Chain>
 </Audio>
