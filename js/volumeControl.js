@@ -3,7 +3,6 @@ const volumeSlider = document.querySelector('#volume');
 volumeSlider.addEventListener('input', (e) => getVolume(e));
 
 function getVolume(e) {
-   console.log(e);
    webAudioXML.setVariable("vol", parseFloat(volume.value));
 };
 

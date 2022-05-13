@@ -27,7 +27,7 @@ class Actor {
    }
 }
 
-class SliderTheremin {
+class ErraticInstrument {
    constructor() {
       this.canvas = document.querySelector('canvas');
       this.context = this.canvas.getContext('2d');
@@ -207,10 +207,10 @@ class SliderTheremin {
    }
 
    loop() {
-      sliderTheremin.update();
-      sliderTheremin.draw();
+      erraticInstrument.update();
+      erraticInstrument.draw();
 
-      window.requestAnimationFrame(sliderTheremin.loop);
+      window.requestAnimationFrame(erraticInstrument.loop);
    }
 
    listen() {
@@ -271,7 +271,7 @@ class SliderTheremin {
    }
 }
 
-const sliderTheremin = new SliderTheremin();
+const erraticInstrument = new ErraticInstrument();
 
 // const volumeSlider = document.querySelector('#volume');
 
