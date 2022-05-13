@@ -14,5 +14,4 @@
 	
 			<GainNode gain="$volume"></GainNode>
 		</Chain>
-
 </Audio>
