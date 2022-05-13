@@ -46,7 +46,7 @@ class ErraticInstrument {
 
       this.acceleration = 2;
       this.deceleration = 0.97;
-      this.epsilon = 0.3;
+      this.epsilon = 0.1;
 
       this.running = false;
       this.inputEnabled = true;
@@ -272,15 +272,3 @@ class ErraticInstrument {
 }
 
 const erraticInstrument = new ErraticInstrument();
-
-// const volumeSlider = document.querySelector('#volume');
-
-// volumeSlider.addEventListener('input', getVolume);
-
-// function getVolume() {
-//    const vol = parseFloat(volume.value);
-   
-//    webAudioXML.setVariable("vol", vol);
-// };
-
-// webAudioXML.setVariable("vol", 5);
