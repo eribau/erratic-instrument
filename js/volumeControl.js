@@ -1,9 +1,18 @@
 const volumeSlider = document.querySelector('#volume');
 
-volumeSlider.addEventListener('input', getVolume);
+volumeSlider.addEventListener('input', (e) => getVolume(e));
 
-function getVolume() {
+function getVolume(e) {
+   console.log(e);
    webAudioXML.setVariable("vol", parseFloat(volume.value));
 };
+
+const ev = new InputEvent('input', {
+   bubbles: true,
+   cancelable: false
+});
+
+setTimeout(() => {volumeSlider.dispatchEvent(ev);}, 300)
+
 
 
